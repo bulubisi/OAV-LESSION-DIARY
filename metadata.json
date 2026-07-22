@@ -1,0 +1,6 @@
+{
+  "name": "Daily Lesson Diary",
+  "description": "An interactive digital planner to record, maintain, search, and print lesson diaries conforming to the official school ledger layout, complete with AI assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
