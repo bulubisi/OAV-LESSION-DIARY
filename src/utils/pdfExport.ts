@@ -107,64 +107,78 @@ export async function exportDiaryToPdf(
       el.style.width = "1120px";
       el.style.margin = "0 auto";
 
-      // Render element to canvas with crisp resolution
+      // Render element to canvas with crisp HD resolution
       const canvas = await html2canvas(el, {
-        scale: 1.8,
+        scale: 2.2,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
         allowTaint: true,
         windowWidth: 1280,
         onclone: (clonedDoc) => {
-          // Canvas helper to convert any CSS color string (including oklch) to browser-resolved hex/rgb
-          const c = document.createElement("canvas");
-          const ctx = c.getContext("2d");
+          // Helper to convert any CSS color string (like oklch) to standard browser-resolved rgb(r,g,b)
+          const dummyEl = clonedDoc.createElement("div");
+          clonedDoc.body.appendChild(dummyEl);
 
-          const parseColorToRgb = (colorStr: string): string => {
-            if (!ctx) return "rgb(200, 200, 200)";
+          const oklchToRgb = (oklchStr: string): string => {
             try {
-              ctx.fillStyle = "#000000";
-              ctx.fillStyle = colorStr;
-              const res = ctx.fillStyle;
-              if (res && res !== "#000000" && res !== "#000" && !res.includes("oklch")) {
-                return res;
+              dummyEl.style.color = "";
+              dummyEl.style.color = oklchStr;
+              const computed = window.getComputedStyle(dummyEl).color;
+              if (computed && (computed.startsWith("rgb") || computed.startsWith("#"))) {
+                return computed;
               }
-              return "rgb(200, 200, 200)";
             } catch {
-              return "rgb(200, 200, 200)";
+              // fallback
             }
+            // If it's a high lightness color (like bg-gray-50), return white, else black
+            const lightMatch = oklchStr.match(/oklch\s*\(\s*([0-9\.]+)/i);
+            if (lightMatch && parseFloat(lightMatch[1]) > 0.5) {
+              return "#ffffff";
+            }
+            return "transparent";
           };
 
           const replaceOklch = (text: string): string => {
             if (!text || !text.includes("oklch")) return text;
-            return text.replace(/oklch\([^)]+\)/gi, (match) => parseColorToRgb(match));
+            return text.replace(/oklch\s*\([^\)]*\)/gi, (match) => oklchToRgb(match));
           };
 
-          // 1. Sanitize oklch colors from all <style> tags in cloned document
+          // 1. Convert all <link rel="stylesheet"> into inline <style> tags and sanitize oklch
+          const links = Array.from(clonedDoc.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'));
+          links.forEach((link) => {
+            try {
+              const sheet = link.sheet;
+              if (sheet) {
+                let cssText = "";
+                try {
+                  const rules = sheet.cssRules || sheet.rules;
+                  if (rules) {
+                    for (let r = 0; r < rules.length; r++) {
+                      cssText += rules[r].cssText + "\n";
+                    }
+                  }
+                } catch {
+                  // cross-origin protection
+                }
+                if (cssText) {
+                  const styleTag = clonedDoc.createElement("style");
+                  styleTag.textContent = replaceOklch(cssText);
+                  clonedDoc.head.appendChild(styleTag);
+                }
+              }
+            } catch {
+              // ignore
+            }
+            link.remove();
+          });
+
+          // 2. Sanitize all <style> tags in cloned document
           clonedDoc.querySelectorAll("style").forEach((styleEl) => {
             if (styleEl.textContent && styleEl.textContent.includes("oklch")) {
               styleEl.textContent = replaceOklch(styleEl.textContent);
             }
           });
-
-          // 2. Sanitize stylesheets rules
-          try {
-            Array.from(clonedDoc.styleSheets).forEach((sheet) => {
-              try {
-                const rules = sheet.cssRules || sheet.rules;
-                if (!rules) return;
-                Array.from(rules).forEach((rule: any) => {
-                  if (rule.style && rule.style.cssText && rule.style.cssText.includes("oklch")) {
-                    rule.style.cssText = replaceOklch(rule.style.cssText);
-                  }
-                });
-              } catch {
-                // ignore cross-domain stylesheet read errors
-              }
-            });
-          } catch {
-            // ignore
-          }
 
           // 3. Sanitize inline style attributes on all DOM elements
           clonedDoc.querySelectorAll("*").forEach((node) => {
@@ -175,20 +189,74 @@ export async function exportDiaryToPdf(
             }
           });
 
-          // 4. Convert computed oklch colors on printable elements to explicit inline styles
+          // Clean up dummy element
+          dummyEl.remove();
+
+          // 4. Force solid black text, white background, and crisp black borders on printable nodes
           const printableNodes = clonedDoc.querySelectorAll<HTMLElement>("#pdf-temp-stage *");
           printableNodes.forEach((node) => {
             try {
-              const computed = window.getComputedStyle(node);
-              const colorProps = ["backgroundColor", "color", "borderColor", "outlineColor", "fill", "stroke"];
-              colorProps.forEach((prop) => {
-                const val = (computed as any)[prop];
-                if (val && typeof val === "string" && val.includes("oklch")) {
-                  (node.style as any)[prop] = parseColorToRgb(val);
-                }
-              });
+              const tagName = node.tagName.toLowerCase();
+              // Text color black everywhere
+              node.style.color = "#000000";
+
+              if (tagName === "td" || tagName === "th") {
+                node.style.borderColor = "#000000";
+                node.style.borderStyle = "solid";
+                node.style.backgroundColor = "#ffffff";
+              } else if (tagName === "table") {
+                node.style.borderColor = "#000000";
+                node.style.borderStyle = "solid";
+                node.style.borderCollapse = "collapse";
+                node.style.backgroundColor = "#ffffff";
+              } else if (node.classList.contains("border-b") || node.className.includes("border-b")) {
+                node.style.borderBottomColor = "#000000";
+              }
             } catch {
-              // ignore computed style read errors if any
+              // ignore
+            }
+          });
+
+          // 5. Convert vertical date elements with data-date-str into crisp canvas images for html2canvas
+          const dateElements = clonedDoc.querySelectorAll<HTMLElement>("[data-date-str]");
+          dateElements.forEach((el) => {
+            try {
+              const dateStr = el.getAttribute("data-date-str");
+              if (!dateStr) return;
+
+              const canvas = clonedDoc.createElement("canvas");
+              const scale = 3;
+              canvas.width = 50 * scale;
+              canvas.height = 120 * scale;
+              const ctx = canvas.getContext("2d");
+
+              if (ctx) {
+                ctx.scale(scale, scale);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, 50, 120);
+                ctx.font = "900 16px monospace, 'Courier New', sans-serif";
+                ctx.fillStyle = "#000000";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                ctx.translate(25, 60);
+                ctx.rotate(Math.PI / 2); // 90deg clockwise rotation
+                ctx.fillText(dateStr, 0, 0);
+
+                const img = clonedDoc.createElement("img");
+                img.src = canvas.toDataURL("image/png");
+                img.style.width = "28px";
+                img.style.height = "76px";
+                img.style.display = "block";
+                img.style.margin = "0 auto";
+                img.style.objectFit = "contain";
+
+                const parent = el.parentElement || el;
+                el.remove();
+                parent.appendChild(img);
+              }
+            } catch {
+              // fallback
             }
           });
         },

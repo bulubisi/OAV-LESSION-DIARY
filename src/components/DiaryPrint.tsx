@@ -1,5 +1,6 @@
 import React from "react";
 import { LessonDiary } from "../types";
+import oavLogo from "../assets/logo.png";
 
 const formatClassSection = (cs: string) => {
   if (!cs) return "";
@@ -41,13 +42,14 @@ const formatDateVertically = (dateStr: string) => {
   const displayDate = `${day}-${month}-${year}`;
 
   return (
-    <div className="flex items-center justify-center select-none py-1 min-h-[70px]">
+    <div className="flex items-center justify-center select-none py-1 min-h-[60px] h-full w-full">
       <span 
-        className="inline-block text-xs print:text-[12px] font-bold tracking-wider text-slate-800 font-mono whitespace-nowrap"
+        className="inline-block text-[11px] sm:text-xs print:text-[11px] font-bold text-black font-mono whitespace-nowrap"
         style={{
           writingMode: "vertical-rl",
           textOrientation: "mixed",
         }}
+        data-date-str={displayDate}
       >
         {displayDate}
       </span>
@@ -164,39 +166,59 @@ export default function DiaryPrint({ diary, rowsPerPage = "auto" }: DiaryPrintPr
           >
             {/* Header and Meta Info Group */}
             <div className="print:flex print:flex-col print:gap-1.5">
-              {/* School Name & Title Header */}
-              <div className="relative text-center mb-3 print:mb-2">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-display uppercase tracking-wide print:text-xl">
-                  {diary.schoolName || "Odisha Adarsha Vidyalaya, Bibina, Saintala"}
-                </h1>
-                <h2 className="text-sm sm:text-base md:text-lg font-medium font-sans border-b border-black inline-block pb-0.5 mt-0.5 print:text-sm">
-                  Daily Lesson Diary
-                </h2>
-                {/* Elegant Page Indicator */}
-                <div className="absolute top-0 right-1 text-[10px] font-mono text-gray-400 print:text-black font-semibold">
-                  Page {pageNum} of {totalPages}
+              {/* School Name & Title Header with OAV Logo */}
+              <div className="relative flex items-center justify-between mb-2 print:mb-1.5 min-h-[50px]">
+                {/* Logo on top left - enlarged and shifted right */}
+                <div className="flex items-center shrink-0 w-[68px] h-[68px] print:w-[62px] print:h-[62px] ml-8 sm:ml-12 print:ml-10">
+                  <img
+                    src={oavLogo}
+                    alt="OAV Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+
+                {/* School Name & Title */}
+                <div className="text-center flex-1 px-2">
+                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-display uppercase tracking-wide print:text-xl text-black leading-tight">
+                    {diary.schoolName || "Odisha Adarsha Vidyalaya, Bibina, Saintala"}
+                  </h1>
+                  <h2 className="text-sm sm:text-base md:text-lg font-bold font-sans border-b border-black inline-block pb-0.5 mt-0.5 print:text-sm text-black">
+                    Daily Lesson Diary
+                  </h2>
+                </div>
+
+                {/* Page Indicator on top right */}
+                <div className="shrink-0 w-[52px] text-right self-start pt-0.5">
+                  <span className="text-[10px] font-mono text-gray-500 print:text-black font-semibold whitespace-nowrap">
+                    Page {pageNum} of {totalPages}
+                  </span>
                 </div>
               </div>
 
               {/* Meta info header */}
-              <div className="flex flex-wrap justify-between items-end mb-2 print:mb-1.5 text-xs sm:text-sm font-medium px-1 print:text-xs">
-                <div>
-                  <span className="font-bold">Subject - </span>
-                  <span className="border-b border-dashed border-black px-2 py-0.5 min-w-[120px] inline-block">
+              <div className="flex flex-wrap justify-between items-end mb-3 print:mb-2 text-xs sm:text-sm font-medium px-1 print:text-xs gap-3">
+                {/* Subject */}
+                <div className="inline-flex items-baseline gap-1.5">
+                  <span className="font-bold text-black whitespace-nowrap">Subject:</span>
+                  <span className="font-bold text-black border-b border-dashed border-black px-2 pb-1.5 min-w-[140px] inline-block text-left leading-normal">
                     {diary.subject || "Sanskrit"}
                   </span>
                 </div>
-                <div className="flex gap-4 sm:gap-6 mt-1 sm:mt-2 md:mt-0 text-[11px] sm:text-xs print:text-xs">
-                  <div>
-                    <span className="text-gray-600">Teacher: </span>
-                    <span className="font-semibold border-b border-dashed border-black px-1">
+
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-[11px] sm:text-xs print:text-xs">
+                  {/* Teacher */}
+                  <div className="inline-flex items-baseline gap-1.5">
+                    <span className="text-black font-semibold whitespace-nowrap">Teacher:</span>
+                    <span className="font-bold text-black border-b border-dashed border-black px-2 pb-1.5 min-w-[160px] inline-block text-left leading-normal">
                       {diary.teacherName || "____________________"}
                     </span>
                   </div>
+
+                  {/* Session */}
                   {diary.academicYear && (
-                    <div>
-                      <span className="text-gray-600">Session: </span>
-                      <span className="font-semibold border-b border-dashed border-black px-1">
+                    <div className="inline-flex items-baseline gap-1.5">
+                      <span className="text-black font-semibold whitespace-nowrap">Session:</span>
+                      <span className="font-bold text-black border-b border-dashed border-black px-2 pb-1.5 min-w-[90px] inline-block text-left leading-normal">
                         {diary.academicYear}
                       </span>
                     </div>
@@ -209,149 +231,146 @@ export default function DiaryPrint({ diary, rowsPerPage = "auto" }: DiaryPrintPr
             <div className="overflow-x-auto print:overflow-visible print:flex-1 print:flex print:flex-col print:my-2">
               <table className="w-full border-collapse border-[1.5px] border-black text-xs sm:text-sm print:text-[11.5px] print:leading-normal leading-normal text-center font-medium print:h-full print:flex-1">
                 <thead>
-                  <tr className="border-b-[1.5px] border-black bg-gray-50 print:bg-transparent">
+                  <tr className="bg-white text-black">
                     {/* Sl No */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[3%] align-middle text-center">
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[3%] align-middle text-center">
                       Sl no
                     </th>
                     
                     {/* Date */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[3.5%] align-middle text-center">
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[4%] align-middle text-center">
                       Date
                     </th>
                     
                     {/* Class and Section */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[4.5%] align-middle text-center">
-                      Class And Section
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[5%] align-middle text-center">
+                      Class & Sec
                     </th>
                     
                     {/* Periods */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[4%] align-middle text-center">
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[4%] align-middle text-center">
                       Periods
                     </th>
                     
                     {/* Name of chapter */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[17%] align-middle text-left">
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[17%] align-middle text-left">
                       Name of the chapter
                     </th>
                     
                     {/* Concept */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[23%] align-middle text-left">
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[23%] align-middle text-left">
                       Concept
                     </th>
                     
-                    {/* No of period allotted (vertical) */}
-                    <th className="border-r border-black w-[3.5%] align-middle">
-                      <div className="vertical-header-text mx-auto font-bold h-[85px] print:h-[65px] flex items-center justify-center">
-                        No of period allotted
+                    {/* No of period allotted */}
+                    <th className="border-r border-b-[1.5px] border-black w-[4%] align-middle text-center p-1">
+                      <div className="font-extrabold text-black text-[9.5px] sm:text-[10.5px] leading-tight text-center">
+                        No. of periods allotted
                       </div>
                     </th>
                     
-                    {/* No of period covered (vertical) */}
-                    <th className="border-r border-black w-[3.5%] align-middle">
-                      <div className="vertical-header-text mx-auto font-bold h-[85px] print:h-[65px] flex items-center justify-center">
-                        No of period covered
+                    {/* No of period covered */}
+                    <th className="border-r border-b-[1.5px] border-black w-[4%] align-middle text-center p-1">
+                      <div className="font-extrabold text-black text-[9.5px] sm:text-[10.5px] leading-tight text-center">
+                        No. of periods covered
                       </div>
                     </th>
                     
                     {/* Expected outcome */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[27%] align-middle text-left">
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[25%] align-middle text-left">
                       Expected learning outcome
                     </th>
                     
                     {/* TLM required */}
-                    <th className="border-r border-black p-1 sm:p-2 font-bold w-[7%] align-middle text-left">
-                      TLM required and used
+                    <th className="border-r border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[8%] align-middle text-left">
+                      TLM required & used
                     </th>
                     
-                    {/* Whether needs repetition of the class (vertical) */}
-                    <th className="border-r border-black w-[3.5%] align-middle">
-                      <div className="vertical-header-text mx-auto font-bold h-[85px] print:h-[65px] flex items-center justify-center">
-                        Whether needs repetition of the class
+                    {/* Whether needs repetition */}
+                    <th className="border-r border-b-[1.5px] border-black w-[4%] align-middle text-center p-1">
+                      <div className="font-extrabold text-black text-[9px] sm:text-[10px] leading-tight text-center">
+                        Repetition needed?
                       </div>
                     </th>
                     
                     {/* Remarks */}
-                    <th className="p-1 sm:p-2 font-bold w-[3.5%] align-middle text-left">
-                      Remarks of achievements
+                    <th className="border-b-[1.5px] border-black p-1 sm:p-2 font-extrabold text-black w-[3%] align-middle text-left">
+                      Remarks
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageRows.map((row, index) => {
-                    const isLastRow = index === pageRows.length - 1;
                     return (
                       <tr
                         key={row.id}
-                        className={`min-h-[55px] h-[55px] print:h-auto ${
-                          isLastRow ? "" : "border-b border-black"
-                        } hover:bg-gray-50/50 print:hover:bg-transparent`}
+                        className="min-h-[62px] h-auto print:h-auto hover:bg-gray-50/50 print:hover:bg-transparent"
                       >
                         {/* Sl No */}
-                        <td className="border-r border-black font-semibold p-1 print:p-0.5 text-xs print:text-[11px]">
+                        <td className="border-r border-b border-black font-bold p-1 print:p-0.5 text-xs print:text-[11px] text-black">
                           {row.slNo}
                         </td>
                         
                         {/* Date */}
-                        <td className="border-r border-black p-1 print:p-0.5 text-center">
+                        <td className="border-r border-b border-black p-1 print:p-0.5 text-center text-black">
                           {formatDateVertically(row.date)}
                         </td>
                         
                         {/* Class and Section */}
-                        <td className="border-r border-black p-1 sm:p-1.5 font-bold text-center align-middle text-xs print:text-[11.5px] leading-tight whitespace-normal break-words">
+                        <td className="border-r border-b border-black p-1 sm:p-1.5 font-bold text-center align-middle text-xs print:text-[11.5px] leading-tight text-black whitespace-normal break-words">
                           {formatClassSection(row.classSection)}
                         </td>
                         
                         {/* Periods */}
-                        <td className="border-r border-black p-1 print:p-0.5 font-bold font-mono text-center text-xs print:text-[11px]">
+                        <td className="border-r border-b border-black p-1 print:p-0.5 font-bold font-mono text-center text-xs print:text-[11px] text-black">
                           {row.periods}
                         </td>
                         
                         {/* Name of Chapter */}
-                        <td className="border-r border-black p-1.5 print:p-1 text-left font-bold text-slate-900 text-sm sm:text-base print:text-[13px] leading-snug break-words align-top">
+                        <td className="border-r border-b border-black p-1.5 print:p-1 text-left font-bold text-black text-xs sm:text-sm print:text-[12px] leading-snug break-words align-top">
                           {row.chapterName}
                         </td>
                         
                         {/* Concept */}
-                        <td className="border-r border-black p-1.5 print:p-1 text-left font-semibold text-slate-800 text-sm sm:text-base print:text-[12.5px] leading-snug break-words align-top">
+                        <td className="border-r border-b border-black p-1.5 print:p-1 text-left font-semibold text-black text-xs sm:text-sm print:text-[11.5px] leading-snug break-words align-top">
                           {row.concept}
                         </td>
                         
                         {/* No of Period Allotted */}
-                        <td className="border-r border-black p-1 print:p-0.5 font-bold font-mono text-center text-xs print:text-[11.5px]">
+                        <td className="border-r border-b border-black p-1 print:p-0.5 font-bold font-mono text-center text-xs print:text-[11.5px] text-black">
                           {row.periodsAllotted}
                         </td>
                         
                         {/* No of Period Covered */}
-                        <td className="border-r border-black p-1 print:p-0.5 font-bold font-mono text-center text-xs print:text-[11.5px]">
+                        <td className="border-r border-b border-black p-1 print:p-0.5 font-bold font-mono text-center text-xs print:text-[11.5px] text-black">
                           {row.periodsCovered}
                         </td>
                         
                         {/* Expected Learning Outcome */}
-                        <td className="border-r border-black p-1.5 print:p-1 text-left font-semibold text-slate-800 text-sm sm:text-base print:text-[12.5px] leading-snug break-words align-top">
+                        <td className="border-r border-b border-black p-1.5 print:p-1 text-left font-semibold text-black text-xs sm:text-sm print:text-[11.5px] leading-snug break-words align-top">
                           {row.expectedOutcome}
                         </td>
                         
                         {/* TLM required and used */}
-                        <td className="border-r border-black p-1.5 print:p-1 text-left font-medium text-slate-700 text-xs sm:text-sm print:text-[11px] leading-tight break-words align-top">
+                        <td className="border-r border-b border-black p-1.5 print:p-1 text-left font-medium text-black text-xs sm:text-sm print:text-[11px] leading-tight break-words align-top">
                           {row.tlmRequired}
                         </td>
                         
                         {/* Needs repetition */}
-                        <td className="border-r border-black p-1 print:p-0.5 font-bold text-center text-xs print:text-[11.5px]">
+                        <td className="border-r border-b border-black p-1 print:p-0.5 font-bold text-center text-xs print:text-[11.5px] text-black">
                           {row.needsRepetition === "Yes" ? (
-                            <span className="px-1 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded print:border-none print:bg-transparent print:text-black">
+                            <span className="font-bold text-black">
                               Yes
                             </span>
                           ) : row.needsRepetition === "No" ? (
-                            <span className="text-gray-400 font-medium">—</span>
+                            <span className="text-black font-medium">—</span>
                           ) : (
                             ""
                           )}
                         </td>
                         
                         {/* Remarks */}
-                        <td className="p-1.5 print:p-1 text-left font-medium text-slate-600 text-[10px] sm:text-xs print:text-[9.5px] leading-tight break-words align-top">
+                        <td className="border-b border-black p-1.5 print:p-1 text-left font-medium text-black text-[10px] sm:text-xs print:text-[10px] leading-tight break-words align-top">
                           {row.remarks}
                         </td>
                       </tr>
